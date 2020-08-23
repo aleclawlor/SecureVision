@@ -1,0 +1,135 @@
+import React, { Component } from 'react'
+import Modal from '../material/modal'
+import Snack from '../snackbar/snackbar'
+import Button from '@material-ui/core/Button'
+import { TextField } from '@material-ui/core'
+
+const Axios = require('axios')
+
+const primaryColor = '#2D2D2D'
+const accentColor = '#1C63CD'
+
+class myModal extends Component {
+
+    state = {
+        showEditModal: false, 
+        showDeactivateModal: false,
+        parentName: this.props.name,
+        studentName: this.props.studentName,
+        plateNumber: this.props.plateNumber,
+        confirmPlate: this.props.plateNumber,
+        oldParent: this.props.parentName, 
+        oldPlate: this.props.plateNumber,
+        id: this.props.id,
+        showSuccess: false,
+        display: true
+    }
+
+    // modal handlers for parent license plate
+    handleEditModalClose = () => {
+        this.setState({showEditModal: false})
+    }
+    
+    handleDeactivateModalClose = () => {
+        this.setState({showDeactivateModal: false})
+    }
+
+    editItemHandler = async() => {
+        if(this.state.plateNumber === this.state.confirmPlate){
+            // find currently selected plate in db 
+        let editItem = await Axios.put('/api/edit/editPlate', {
+                id: this.state.id, 
+                parentName: this.state.parentName,
+                studentName: this.state.studentName,
+                plateNumber: this.state.plateNumber
+            })
+        console.log(editItem)
+        this.setState({
+            showEditModal: false
+        })
+        this.setState({showSuccess: true, oldPlate: this.state.plateNumber, oldParent: this.state.parentName})
+        this.props.onSubmit()
+    }
+        else{
+            console.log("Plates do not match")
+        }
+    }
+
+    deactivatetemHandler = async() => {
+        // find currently selected plate in db 
+        let deactivate = await Axios.put('/api/edit/deactivate', {
+                id: this.state.id 
+            })
+        console.log(deactivate)
+        this.setState({showDeactivateModal: false})
+        this.setState({showSuccess: true})
+        this.setState({display:false})
+        this.props.onSubmit()
+    }
+
+    // handlers for parent plate information changes
+    parentNameChangeHandler = (event) => {
+        this.setState({parentName: event.target.value}) 
+    }
+
+    studentNameChangeHandler = (event) => {
+      this.setState({studentName: event.target.value})
+    }
+
+    plateChangeHandler = (event) => {
+      this.setState({plateNumber: event.target.value}) 
+    }
+
+    confirmPlateChangeHandler = (event) => {
+      this.setState({confirmPlate: event.target.value})
+    }   
+
+    render(){
+
+    let successSnack = this.state.showSuccess ? <Snack activate={true} message="Plate successfully edited"></Snack> : null
+    
+    return(
+        <div>
+            <Modal shouldOpen={this.props.showEditModal} title="Edit Plate">
+                <div style={{display: 'flex'}}>
+                    <div style={{float: 'left', width: '100px', fontSize: '16px', lineHeight: '42px'}}>
+                        <p style={{width: '200px', display:'flex'}}>Parent Name: </p>
+                        <p style={{width: '200px', display:'flex'}}>Student Name: </p>
+                        <p style={{width: '200px', display:'flex'}}>Plate Number: </p>
+                        <p style={{width: '200px', display:'flex'}}>Confirm Plate Number: </p>
+                    </div>
+                    <div style={{float: 'right', marginLeft: '20%'}}>
+                        <TextField color={accentColor} style={{width: '100%', marginBottom: '4px'}} onChange = {this.parentNameChangeHandler} value={this.state.parentName} variant="outlined"></TextField>
+                        <TextField color={accentColor} style={{width: '100%', marginBottom: '4px'}} onChange = {this.studentNameChangeHandler} value={this.state.studentName} variant="outlined"></TextField>
+                        <TextField color={accentColor} style={{width: '100%', marginBottom: '4px'}} onChange = {this.plateChangeHandler} value={this.state.plateNumber} variant="outlined"></TextField>
+                        <TextField color={accentColor} style={{width: '100%', marginBottom: '4px'}} onChange = {this.confirmPlateChangeHandler} value={this.state.confirmPlate} variant="outlined"></TextField>
+                    </div>
+                </div>     
+                <div style={{marginTop: '20px'}}>
+                    <Button variant = "outlined" onClick = {this.editItemHandler} style={{marginTop: '0px', color: accentColor, border: accentColor, outline: accentColor, fontWeight: 550}}>
+                        Confirm Edit
+                    </Button>
+                    <Button variant = "outlined" onClick = {this.props.onCancel} style={{marginTop: '0px', marginLeft: '20px', color: accentColor, border: accentColor, outline: accentColor, fontWeight: 550}}>
+                        Cancel
+                    </Button>
+                </div>
+            </Modal>
+            <Modal 
+            shouldOpen={this.props.showDeactivateModal}
+            title="Confirm Deactivation">
+                <p>Are you sure you wish to deactivate this plate? Deactivation means cameras will no longer recognize this plate, and it will be removed from the 'active plates' section. Please confirm this action.</p>
+                <div>
+                    <Button variant = "outlined" onClick = {this.deactivatetemHandler} style={{marginTop: '20px', color: accentColor, border: accentColor, outline: accentColor, fontWeight: 550}}>
+                        Confirm Deactivation
+                    </Button>
+                    <Button variant = "outlined" onClick = {this.props.onCancel} style={{marginTop: '20px', marginLeft: '20px', color: accentColor, border: accentColor, outline: accentColor, fontWeight: 550}}>
+                        Cancel
+                    </Button>
+                </div>
+            </Modal>
+        {successSnack}
+        </div>
+    )}
+}
+
+export default myModal
